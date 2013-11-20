@@ -10,23 +10,18 @@ Import Prenex Implicits.
 
 Check @Ordinal.
 
-Definition bind_ord {m} n : 'I_m.+1 :=
+Definition truncord {m} n : 'I_m.+1 :=
   @Ordinal m.+1 (minn m n) (eq_ind_r is_true (geq_minl m n) (ltnS (minn m n) m)).
 
-Lemma bord_minn m n : nat_of_ord (@bind_ord m n) = minn m n.
-Proof.
-  by rewrite /bind_ord /=.
-Qed.
-
-Lemma odd_bord_p m (n : 'I_m.+1) :
-  @bind_ord m n.-1 != n -> odd (@bind_ord m n.-1) = ~~ odd n.
+Lemma odd_tord_p m (n : 'I_m.+1) :
+  @truncord m n.-1 != n -> odd (@truncord m n.-1) = ~~ odd n.
 Proof.
   by rewrite eqE /=; move: n => [] [] //= n;
     rewrite ltnS; move/ltnW/minn_idPr => ->; case: (odd n).
 Qed.
 
-Lemma odd_bord_s m (n : 'I_m.+1) :
-  @bind_ord m n.+1 != n -> odd (@bind_ord m n.+1) = ~~ odd n.
+Lemma odd_tord_s m (n : 'I_m.+1) :
+  @truncord m n.+1 != n -> odd (@truncord m n.+1) = ~~ odd n.
 Proof.
   rewrite eqE /=; case: n => /= n; rewrite ltnS leq_eqVlt; case/orP.
   - by move/eqP => ?; subst n; rewrite (minn_idPl (leqnSn m)) eqxx.
@@ -50,8 +45,8 @@ Definition puzzle_next (b : board) : {set board} :=
   let (ex, ey) := b^-1%g empty_space in
   [set (tperm npos (ex, ey) * b)%g |
     npos : elemt &
-    (npos \in [:: (bind_ord ex.-1, ey); (bind_ord ex.+1, ey);
-                  (ex, bind_ord ey.-1); (ex, bind_ord ey.+1)]) &&
+    (npos \in [:: (truncord ex.-1, ey); (truncord ex.+1, ey);
+                  (ex, truncord ey.-1); (ex, truncord ey.+1)]) &&
     (npos != (ex, ey))].
 
 Definition puzzle_reachable : rel board :=
@@ -81,7 +76,15 @@ Proof.
     case/andP; move/eqP => ?; move/eqP => ?; subst b2x b2y;
     do 3 f_equal; rewrite -2!addbA addNb -addbN; f_equal;
     (rewrite -addNb; f_equal; [] || rewrite -addbN; f_equal; []);
-    rewrite ?(odd_bord_p H) ?(odd_bord_s H); case: (odd _).
+    rewrite ?(odd_tord_p H) ?(odd_tord_s H); case: (odd _).
+Qed.
+
+Lemma reachable_cond b1 b2 :
+  puzzle_reachable b1 b2 -> invariant b1 = invariant b2.
+Proof.
+  rewrite /puzzle_reachable.
+  case/connectP => ps H ?; subst b2.
+  elim: ps b1 H => //= b2 ps IH b1; case/andP; move/invariant2 => ->; apply IH.
 Qed.
 
 End puzzle.
