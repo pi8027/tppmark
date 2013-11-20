@@ -50,7 +50,7 @@ Definition reachable := connect (fun b1 b2 => b2 \in puzzle_next b1).
 
 Definition invariant (b : board) : bool :=
   let (ex, ey) := b^-1%g empty_space in
-  ~~ (odd_perm b (+) odd ex (+) odd ey (+) odd x (+) odd y).
+  odd_perm b (+) odd ex (+) odd ey (+) odd x (+) odd y.
 
 Lemma next_invariant b1 b2 :
   b2 \in puzzle_next b1 -> invariant b1 = invariant b2.
@@ -64,7 +64,7 @@ Proof.
     move: Hb2; rewrite odd_mul_tperm H /= invMg tpermV permM -{}Hb1 tpermR;
     move/eqP; move: H; rewrite !eqE /= eqxx 1?andbT /= => H;
     case/andP; move/eqP => ?; move/eqP => ?; subst b2x b2y;
-    do 3 f_equal; rewrite -2!addbA addNb -addbN; f_equal;
+    do 2 f_equal; rewrite -2!addbA addNb -addbN; f_equal;
     (rewrite -addNb; f_equal; [] || rewrite -addbN; f_equal; []);
     rewrite ?(odd_tord_p H) ?(odd_tord_s H); case: (odd _).
 Qed.
@@ -81,7 +81,7 @@ Theorem tperm_unsolvable e1 e2 : e1 != e2 ->
 Proof.
   move => H H0 H1; apply/negP; move/reachable_cond; move/eqP; apply/negP.
   by rewrite /invariant tpermV tpermD //
-             odd_tperm H invg1 perm1 odd_perm1 /= !addNb; case: (~~ (_ (+) _)).
+             odd_tperm H invg1 perm1 odd_perm1 /= !addNb; case: (_ (+) _).
 Qed.
 
 End puzzle.
