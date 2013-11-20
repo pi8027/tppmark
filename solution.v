@@ -1,17 +1,14 @@
 Require Import
   Ssreflect.ssreflect Ssreflect.ssrfun Ssreflect.ssrbool Ssreflect.eqtype
-  Ssreflect.ssrnat Ssreflect.seq Ssreflect.fintype
-  MathComp.path MathComp.fingraph MathComp.bigop MathComp.finset
-  MathComp.fingroup MathComp.perm.
+  Ssreflect.ssrnat Ssreflect.seq Ssreflect.fintype MathComp.path
+  MathComp.fingraph MathComp.finset MathComp.fingroup MathComp.perm.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Import Prenex Implicits.
 
-Check @Ordinal.
-
 Definition truncord {m} n : 'I_m.+1 :=
-  @Ordinal m.+1 (minn m n) (eq_ind_r is_true (geq_minl m n) (ltnS (minn m n) m)).
+  @Ordinal m.+1 (minn m n) (eq_ind_r _ (geq_minl m n) (ltnS (minn m n) m)).
 
 Lemma odd_tord_p m (n : 'I_m.+1) :
   @truncord m n.-1 != n -> odd (@truncord m n.-1) = ~~ odd n.
@@ -49,7 +46,7 @@ Definition puzzle_next (b : board) : {set board} :=
                   (ex, truncord ey.-1); (ex, truncord ey.+1)]) &&
     (npos != (ex, ey))].
 
-Definition puzzle_reachable : rel board :=
+Definition reachable : rel board :=
   connect (fun b1 b2 => b2 \in puzzle_next b1).
 
 Definition invariant (b : board) : bool :=
@@ -62,7 +59,14 @@ Proof.
   by do 2 case: (odd _) => /=.
 Qed.
 
-Lemma invariant2 b1 b2 :
+Lemma invariant2 e1 e2 : e1 != e2 ->
+  e1 != empty_space -> e2 != empty_space -> ~~ invariant (tperm e1 e2).
+Proof.
+  move => H H0 H1.
+  by rewrite /invariant tpermV tpermD // odd_tperm H /=; do 2 case: (odd _).
+Qed.
+
+Lemma invariant3 b1 b2 :
   b2 \in puzzle_next b1 -> invariant b1 = invariant b2.
 Proof.
   rewrite /puzzle_next /invariant.
@@ -79,12 +83,17 @@ Proof.
     rewrite ?(odd_tord_p H) ?(odd_tord_s H); case: (odd _).
 Qed.
 
-Lemma reachable_cond b1 b2 :
-  puzzle_reachable b1 b2 -> invariant b1 = invariant b2.
+Lemma reachable_cond b1 b2 : reachable b1 b2 -> invariant b1 = invariant b2.
 Proof.
-  rewrite /puzzle_reachable.
-  case/connectP => ps H ?; subst b2.
-  elim: ps b1 H => //= b2 ps IH b1; case/andP; move/invariant2 => ->; apply IH.
+  rewrite /reachable; case/connectP => ps H ?; subst b2.
+  elim: ps b1 H => //= b2 ps IH b1; case/andP; move/invariant3 => ->; apply IH.
+Qed.
+
+Theorem tperm_unsolvable e1 e2 : e1 != e2 ->
+  e1 != empty_space -> e2 != empty_space -> ~~ reachable (tperm e1 e2) 1%g.
+Proof.
+  move => H H0 H1; apply/negP; move/reachable_cond.
+  by rewrite invariant1; apply/negP/invariant2.
 Qed.
 
 End puzzle.
