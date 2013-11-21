@@ -49,31 +49,25 @@ Definition puzzle_next (b : board) : {set board} :=
 Definition reachable := connect (fun b1 b2 => b2 \in puzzle_next b1).
 
 Definition invariant (b : board) : bool :=
-  let (ex, ey) := b^-1%g empty_space in
-  odd_perm b (+) odd ex (+) odd ey (+) odd x (+) odd y.
+  let (ex, ey) := b^-1%g empty_space in odd_perm b (+) odd ex (+) odd ey.
 
-Lemma next_invariant b1 b2 :
-  b2 \in puzzle_next b1 -> invariant b1 = invariant b2.
+Lemma nexti b1 b2 : b2 \in puzzle_next b1 -> invariant b1 = invariant b2.
 Proof.
   rewrite /puzzle_next /invariant.
   move: {1 3 4}((b1^-1)%g _) {1 3}((b2^-1)%g _)
     (erefl ((b1^-1)%g empty_space)) (erefl ((b2^-1)%g empty_space)) =>
-    /= [] b1x b1y [] b2x b2y Hb1 Hb2.
-  case/imsetP => npos; rewrite !inE.
+    /= [] b1x b1y [] b2x b2y Hb1 Hb2; case/imsetP => npos; rewrite !inE.
   by case/andP; do !case/orP; move/eqP => ? H ?; subst npos b2 => /=;
     move: Hb2; rewrite odd_mul_tperm H /= invMg tpermV permM -{}Hb1 tpermR;
     move/eqP; move: H; rewrite !eqE /= eqxx 1?andbT /= => H;
-    case/andP; move/eqP => ?; move/eqP => ?; subst b2x b2y;
-    do 2 f_equal; rewrite -2!addbA addNb -addbN; f_equal;
-    (rewrite -addNb; f_equal; [] || rewrite -addbN; f_equal; []);
-    rewrite ?(odd_tord_p H) ?(odd_tord_s H); case: (odd _).
+    case/andP; do 2 move/eqP => ?; subst b2x b2y;
+    rewrite ?(odd_tord_p H) ?(odd_tord_s H) !addbN !addNb; case: (_ (+) _).
 Qed.
 
 Lemma reachable_cond b1 b2 : reachable b1 b2 -> invariant b1 = invariant b2.
 Proof.
   rewrite /reachable; case/connectP => ps H ?; subst b2.
-  elim: ps b1 H => //= b2 ps IH b1; case/andP; move/next_invariant => ->.
-  apply IH.
+  elim: ps b1 H => //= b2 ps IH b1; case/andP; move/nexti => ->; apply IH.
 Qed.
 
 Theorem tperm_unsolvable e1 e2 : e1 != e2 ->
