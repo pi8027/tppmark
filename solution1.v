@@ -47,7 +47,8 @@ Definition reachable := connect (fun b1 b2 => b2 \in puzzle_next b1).
 Definition invariant (b : board) : bool :=
   let (ex, ey) := b^-1%g empty_space in odd_perm b (+) odd ex (+) odd ey.
 
-Lemma nexti b1 b2 : b2 \in puzzle_next b1 -> invariant b1 = invariant b2.
+Lemma next_invariant b1 b2 :
+  b2 \in puzzle_next b1 -> invariant b1 = invariant b2.
 Proof.
   rewrite /puzzle_next /invariant.
   by move: {1 3 4}((b1^-1)%g _) (erefl ((b1^-1)%g empty_space)) =>
@@ -57,16 +58,18 @@ Proof.
     rewrite H ?odd_tord_p ?odd_tord_s // !addbN !addNb; case: (_ (+) _).
 Qed.
 
-Lemma reachable_cond b1 b2 : reachable b1 b2 -> invariant b1 = invariant b2.
+Lemma reachable_invariant b1 b2 :
+  reachable b1 b2 -> invariant b1 = invariant b2.
 Proof.
   rewrite /reachable; case/connectP => ps H ?; subst b2.
-  elim: ps b1 H => //= b2 ps IH b1; case/andP; move/nexti => ->; apply IH.
+  elim: ps b1 H => //= b2 ps IH b1;
+    case/andP; move/next_invariant => ->; apply IH.
 Qed.
 
 Theorem tperm_unsolvable e1 e2 : e1 != e2 ->
   e1 != empty_space -> e2 != empty_space -> ~~ reachable (tperm e1 e2) 1%g.
 Proof.
-  move => H H0 H1; apply/negP; move/reachable_cond; move/eqP; apply/negP.
+  move => H H0 H1; apply/negP; move/reachable_invariant; move/eqP; apply/negP.
   by rewrite /invariant tpermV tpermD //
              odd_tperm H invg1 perm1 odd_perm1 /= !addNb; case: (_ (+) _).
 Qed.
