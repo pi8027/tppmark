@@ -7,14 +7,9 @@ Import Prenex Implicits.
 Theorem well_founded_lt : well_founded (fun n m => n < m).
 Proof.
   move => x.
-  move: {2}x (leqnn x) => n.
-  elim: n x => [ | n IHn ] x H; constructor => y H0.
-  - apply False_ind, notF.
-    rewrite -(ltn0 y).
-    apply (leq_trans H0 H).
-  - apply IHn.
-    rewrite -ltnS.
-    apply (leq_trans H0 H).
+  elim: x {1 3}x (leqnn x) => [| n IHn] x H; constructor => y H0.
+  - by case: x H H0.
+  - exact: (IHn _ (leq_trans H0 H)).
 Defined.
 
 Lemma problem1 a : a ^ 2 %% 3 != 2.
@@ -27,17 +22,16 @@ Lemma problem2 a b c :
   a ^ 2 + b ^ 2 = 3 * c ^ 2 -> [&& 3 %| a, 3 %| b & 3 %| c].
 Proof.
   move => H.
-  have H0: (3 %| a) && (3 %| b).
+  have/andP [H0 H1]: (3 %| a) && (3 %| b).
     move/(f_equal (modn ^~ 3)):
       H (problem1 a) (problem1 b) (@ltn_pmod a 3 erefl) (@ltn_pmod b 3 erefl).
     rewrite /dvdn /expn /= -modnMml modnn mul0n mod0n -modnDm
             -(modnMm a) -(modnMm b).
     by move: (a %% 3) (b %% 3) => [| [| [| a']]] [| [| []]].
-  rewrite andbA H0 /=; move/(f_equal (modn ^~ 9)): H.
-  have/eqP {H0} -> : 9 %| a ^ 2 + b ^ 2 by
-    rewrite /expn /=; apply dvdn_add; apply (@dvdn_mul 3 3); case/andP: H0.
-  move/esym/eqP; rewrite -/(dvdn _ _) (@dvdn_pmul2l 3 3) //.
-  rewrite /dvdn /expn /= -modnMm.
+  rewrite andbA H0 H1 /=; move/(f_equal (modn ^~ (3 ^ 2))): H.
+  have/eqP {H0} -> : 3 ^ 2 %| a ^ 2 + b ^ 2 by
+    rewrite /expn /=; apply dvdn_add; apply dvdn_mul.
+  move/esym/eqP; rewrite -/(dvdn _ _) dvdn_pmul2l // /dvdn /expn /= -modnMm.
   by case: (c %% 3) (@ltn_pmod c 3 erefl) => [| [| []]].
 Qed.
 
@@ -57,8 +51,6 @@ Proof.
   case/and3P: (problem2 H) => H0 H1 H2.
   move: (IH (c.+1 %/ 3)).
   rewrite ltn_Pdiv // => /(_ erefl (a %/ 3) (b %/ 3)).
-  rewrite !divn_expAC // -divnDl ?dvdn_mul // H /expn /= muln_divA ?dvdn_mul //.
-  move/(_ erefl).
-  rewrite -{2}(divnK H2).
-  by case: (_ %/ _).
+  rewrite -{3}(divnK H2) => -> //.
+  by rewrite !divn_expAC // -divnDl ?dvdn_mul // H /expn /= muln_divA ?dvdn_mul.
 Qed.
