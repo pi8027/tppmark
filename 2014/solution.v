@@ -42,14 +42,13 @@ Proof.
 Qed.
 
 Lemma problem3 a b c :
-  a ^ 2 + b ^ 2 = 3 * c ^ 2 -> (a == 0) && (b == 0) && (c == 0).
+  a ^ 2 + b ^ 2 = 3 * c ^ 2 -> [&& a == 0, b == 0 & c == 0].
 Proof.
   move => H.
-  suff H0: c = 0 by move: H; rewrite H0 exp0n // muln0; move: a b => [] // [].
+  suff H0: c = 0 by move: H; rewrite H0; move: a b => [] // [].
   move: c (well_founded_lt c) a b H; refine (Acc_ind _ _).
-  case => // c _ IH a b H.
-  case/and3P: (problem2 H) => H0 H1 H2.
-  move: (IH (c.+1 %/ 3)).
+  case => [] // c _ IH a b H.
+  case/problem2/and3P: (H) (IH (c.+1 %/ 3)) => H0 H1 H2.
   rewrite ltn_Pdiv // => /(_ erefl (a %/ 3) (b %/ 3)).
   rewrite -{3}(divnK H2) => -> //.
   by rewrite !divn_expAC // -divnDl ?dvdn_mul // H /expn /= muln_divA ?dvdn_mul.
