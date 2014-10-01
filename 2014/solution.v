@@ -28,7 +28,7 @@ Proof.
     rewrite /dvdn /expn /= -modnMml modnn mul0n mod0n -modnDm
             -(modnMm a) -(modnMm b).
     by move: (a %% 3) (b %% 3) => [| [| [| a']]] [| [| []]].
-  rewrite andbA H0 H1 /=; move/(f_equal (modn ^~ (3 ^ 2))): H.
+  rewrite H0 H1 /=; move/(f_equal (modn ^~ (3 ^ 2))): H.
   have/eqP {H0} -> : 3 ^ 2 %| a ^ 2 + b ^ 2 by
     rewrite /expn /=; apply dvdn_add; apply dvdn_mul.
   move/esym/eqP; rewrite -/(dvdn _ _) dvdn_pmul2l // /dvdn /expn /= -modnMm.
