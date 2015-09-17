@@ -30,36 +30,30 @@ Definition normal_form' (a : {ffun V -> bool}) : formula :=
         [seq if a x then f_var x else f_neg (f_var x) | x <- enum V].
 
 Definition normal_form (f : formula) : formula :=
-  foldr f_or f_bot [seq normal_form' a | a <- enum {ffun V -> bool} & eval f a].
+  foldr f_or f_bot [seq normal_form' a | a <- enum (eval f)].
 
 Lemma all_in_enum (T : finType) x : x \in enum T.
 Proof. by rewrite mem_enum. Qed.
 
-Lemma nf'_correct a a' : eval (normal_form' a) a' = (a == a').
+Lemma nf'_correct a a' : eval (normal_form' a) a' = (a' == a).
 Proof.
   apply Bool.eq_iff_eq_true; rewrite /normal_form'; split => H.
   - apply/eqP/ffunP => x.
     elim: (enum V) x (all_in_enum x) H => //= x xs IH y; rewrite inE; case/orP.
-    + by move/eqP => -> /andP []; case: (a x) => //=; case: (a' x).
+    + by move => /eqP -> /andP []; case: (a x) => /=; case: (a' x).
     + by move => H /andP [H0] /IH ->.
-  - by rewrite -(eqP H); elim: (enum V) => //= x xs IH;
+  - by rewrite (eqP H); elim: (enum V) => //= x xs IH;
       apply/andP; split => //; case_eq (a x) => /= ->.
 Qed.
 
 Lemma nf_correct f : eval f =1 eval (normal_form f).
 Proof.
-  move => a; apply Bool.eq_iff_eq_true; rewrite /normal_form; split => H.
-  - elim: (enum _) (all_in_enum a) => //= a' al IH; rewrite inE; case/orP.
-    + by move/eqP <-; rewrite /= H /= nf'_correct eqxx.
-    + by move/IH; case: (eval f a') => //= ->; rewrite orbT.
-  - elim: (enum _) H => //= a' al IH; case_eq (eval f a') => //= H /orP [] //.
-    by rewrite nf'_correct => /eqP H0; move: H0 H => <-.
+  move => a; have -> : eval f a = (a \in eval f) by rewrite -topredE.
+  by rewrite /normal_form -mem_enum;
+    elim: (enum _) => //= a' al IH; rewrite inE -IH nf'_correct.
 Qed.
 
 Lemma nf_uniq f f' : eval f =1 eval f' -> normal_form f = normal_form f'.
-Proof.
-  rewrite /normal_form => H; elim: (enum _) => //= a al H0.
-  by case_eq (eval f a) => //; rewrite H => -> //=; rewrite H0.
-Qed.
+Proof. by rewrite /normal_form => /eq_enum ->. Qed.
 
 End propositional_logic.
