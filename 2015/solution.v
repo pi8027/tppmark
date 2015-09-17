@@ -32,14 +32,12 @@ Definition normal_form' (a : {ffun V -> bool}) : formula :=
 Definition normal_form (f : formula) : formula :=
   foldr f_or f_bot [seq normal_form' a | a <- enum (eval f)].
 
-Lemma all_in_enum (T : finType) x : x \in enum T.
-Proof. by rewrite mem_enum. Qed.
-
 Lemma nf'_correct a a' : eval (normal_form' a) a' = (a' == a).
 Proof.
   apply Bool.eq_iff_eq_true; rewrite /normal_form'; split => H.
   - apply/eqP/ffunP => x.
-    elim: (enum V) x (all_in_enum x) H => //= x xs IH y; rewrite inE; case/orP.
+    have H0: x \in enum V by rewrite mem_enum.
+    elim: (enum V) x H0 H => //= x xs IH y; rewrite inE; case/orP.
     + by move => /eqP -> /andP []; case: (a x) => /=; case: (a' x).
     + by move => H /andP [H0] /IH ->.
   - by rewrite (eqP H); elim: (enum V) => //= x xs IH;
